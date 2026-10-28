@@ -6,6 +6,8 @@ import importlib.util
 import json
 from pathlib import Path
 import sys
+import subprocess
+import venv
 import tempfile
 from types import SimpleNamespace
 import unittest
@@ -110,6 +112,35 @@ class CloudControls(unittest.TestCase):
             self.assertIn("--resume", CLOUD.runner_command(args))
             self.assertNotIn("--import-100efc-dir", CLOUD.runner_command(args))
             self.assertIn("--on-active=72900s", CLOUD.hard_stop_command(args))
+
+    @unittest.skipUnless(sys.platform.startswith("linux"), "real venv symlink fixture requires Linux")
+    def test_venv_symlink_preserves_prefix_and_venv_only_module(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            args = self.settings(tmp)
+            prefix = Path(tmp) / "fixture-venv"
+            venv.EnvBuilder(with_pip=False, symlinks=True).create(prefix)
+            launcher = prefix / "bin/python"
+            self.assertTrue(launcher.is_symlink())
+            args.python = str(launcher)
+            command = CLOUD.runner_command(args)
+            self.assertEqual(command[0], str(launcher.absolute()))
+            purelib = subprocess.run([command[0], "-c",
+                "import sysconfig; print(sysconfig.get_path('purelib'))"],
+                check=True, capture_output=True, text=True).stdout.strip()
+            module_name = "capstone_venv_only_regression_fixture"
+            (Path(purelib) / (module_name + ".py")).write_text("VALUE = 'venv-only'\n", encoding="utf-8")
+            probe = subprocess.run([command[0], "-c",
+                "import json,sys," + module_name + "; print(json.dumps({'prefix':sys.prefix,'base_prefix':sys.base_prefix,'value':" + module_name + ".VALUE}))"],
+                check=True, capture_output=True, text=True)
+            value = json.loads(probe.stdout)
+            self.assertEqual(Path(value["prefix"]).resolve(), prefix.resolve())
+            self.assertNotEqual(value["prefix"], value["base_prefix"])
+            self.assertEqual(value["value"], "venv-only")
+            # The old resolve() command would choose this base interpreter.
+            bad_probe = subprocess.run([str(launcher.resolve()), "-c",
+                "import importlib.util; print(importlib.util.find_spec('" + module_name + "') is None)"],
+                check=True, capture_output=True, text=True)
+            self.assertEqual(bad_probe.stdout.strip(), "True")
 
     def test_result_preserved_then_shutdown(self):
         with tempfile.TemporaryDirectory() as tmp:

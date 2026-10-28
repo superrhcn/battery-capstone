@@ -35,7 +35,8 @@ def save_json(path, value):
 
 
 def runner_command(args):
-    cmd = [str(Path(args.python).resolve()),
+    # Keep the venv launcher symlink: resolving it selects the base interpreter.
+    cmd = [str(Path(args.python).absolute()),
         str(Path(args.repo_root).resolve() / "simulation/run_lifetime.py"),
         "--cell", str(args.cell), "--current", str(args.current),
         "--mesh-scale", str(args.mesh_scale), "--efc", str(args.efc),
