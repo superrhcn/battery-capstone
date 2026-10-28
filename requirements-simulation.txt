@@ -1,0 +1,9 @@
+# Physics/data export only. Baseline: Python 3.11.9, locally verified versions.
+# Linux/cloud installation and execution must be checked separately.
+pybamm==26.8.0.0
+pybammsolvers==0.9.1
+casadi==3.7.2
+numpy==2.4.6
+scipy==1.17.1
+pandas==3.0.5
+pyarrow==26.0.0

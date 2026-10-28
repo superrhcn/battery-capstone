@@ -1,0 +1,21 @@
+# Pinned environment (docs/modeling_decisions.md, section 14 step 1)
+# Python 3.11.9 (64-bit, Windows)
+#
+# Install:
+#   python -m pip install -r requirements.txt
+#
+# The first six lines are the versions already installed and verified.
+# They are pinned so that installing the new packages cannot silently change them.
+--extra-index-url https://download.pytorch.org/whl/cpu
+
+pybamm==26.8.0.0
+pybammsolvers==0.9.1
+casadi==3.7.2
+numpy==2.4.6
+scipy==1.17.1
+pandas==3.0.5
+
+# Added for this project
+pyarrow==26.0.0
+scikit-learn==1.9.1
+torch==2.14.1+cpu
